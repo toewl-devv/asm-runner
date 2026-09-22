@@ -1,6 +1,5 @@
 use crate::word::Word;
 
-
 pub struct ALUResult {
     pub out: Word,
     pub zr: bool,

@@ -30,4 +30,16 @@ impl Word {
         }
         out
     }
+
+    pub fn from_array<const N: usize>(input: [bool;N]) -> Self {
+        let mut out = Word::new();
+        for i in 0..=15 {
+            if 16-i <= input.len() { 
+                out.bits[i] = false; 
+            } else {
+                out.bits[i] = input[16-i];
+            }
+        }
+        out
+    }
 }
