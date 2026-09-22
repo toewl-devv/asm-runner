@@ -1,4 +1,3 @@
-
 // use this: https://medium.com/@saehwanpark/diving-deeper-into-lc-3-from-opcodes-to-machine-code-4637cf00c878
 use crate::{instruction::Instruction, word::Word, alu};
 use std::collections::HashMap;
@@ -7,7 +6,11 @@ pub struct Cpu {
     registers: [Word; 8],
     pc: usize,
     memory: Vec<Word>,
-    labels: HashMap<String, usize>
+    labels: HashMap<String, usize>,
+    //flags (zero, negative, positive)
+    zf: bool,
+    nf: bool,
+    pf: bool
 }
 
 impl Cpu {
@@ -16,7 +19,10 @@ impl Cpu {
             registers: [Word::new(); 8],
             pc: 0,
             memory: vec![Word::new(); 2048],
-            labels: HashMap::new()
+            labels: HashMap::new(),
+            zf: false,
+            nf: false,
+            pf: false
         }
     }
 
@@ -34,7 +40,16 @@ impl Cpu {
             let opcode = &instruction.bits[0..=3];
 
             match bin_to_u16(opcode) {
-                0 => {},
+                0 => { // BRANCH or BR
+                    let n = instruction.bits[4];
+                    let z = instruction.bits[5];
+                    let p = instruction.bits[6];
+                    let pcoffset9_bits = &instruction.bits[7..=15];
+                    let pcoffset = bits_to_signed(pcoffset9_bits);
+                    if (self.nf && n) || (self.zf && z) || (self.pf && p) {
+                        self.pc = (self.pc as i16 + pcoffset) as usize;
+                    }
+                },
                 1 => {
                     let steer = instruction.bits[10];
                     let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
@@ -49,6 +64,9 @@ impl Cpu {
 
                         self.registers[dest_adr as usize] = alu::alu(&sr1, &sr2, false, false, false, false, true, false).out;
                     }
+                    self.nf = self.registers[dest_adr as usize].bits[0];
+                    self.zf = self.registers[dest_adr as usize].bits == Word::new().bits;
+                    self.pf = !self.nf && !self.zf;
                 },
                 2 => { // LOAD or LD
                     let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
@@ -58,6 +76,10 @@ impl Cpu {
                     let value = self.memory[address as usize];
 
                     self.registers[dest_adr as usize] = value;
+
+                    self.nf = self.registers[dest_adr as usize].bits[0];
+                    self.zf = self.registers[dest_adr as usize].bits == Word::new().bits;
+                    self.pf = !self.nf && !self.zf;
                 },
                 3 => { // STORE or ST
                     let source_adr = bin_to_u16(&instruction.bits[4..=6]);
@@ -83,6 +105,11 @@ impl Cpu {
 
                         self.registers[dest_adr as usize] = alu::alu(&sr1, &sr2, false, false, false, false, false, false).out;
                     }
+
+                    self.nf = self.registers[dest_adr as usize].bits[0];
+                    self.zf = self.registers[dest_adr as usize].bits == Word::new().bits;
+                    self.pf = !self.nf && !self.zf;
+
                 },
                 6 => {},
                 7 => {},
@@ -91,6 +118,11 @@ impl Cpu {
                     let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
                     let sr1 = self.registers[bin_to_u16(&instruction.bits[7..=9]) as usize];
                     self.registers[dest_adr as usize] = alu::alu(&sr1, &sr1, false, false, true, true, false, true).out;
+
+                    self.nf = self.registers[dest_adr as usize].bits[0];
+                    self.zf = self.registers[dest_adr as usize].bits == Word::new().bits;
+                    self.pf = !self.nf && !self.zf;
+
                 },
                 10 => {},
                 11 => {},
