@@ -8,7 +8,7 @@ impl Word {
         Word {bits: [false; 16]}
     }
 
-    fn from_u16(mut value: u16) -> Self {
+    pub fn from_u16(mut value: u16) -> Self {
         
         let mut out = Word::new();
 

@@ -53,9 +53,21 @@ impl Cpu {
                 2 => { // LOAD or LD
                     let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
                     let pcoffset9_bits = &instruction.bits[7..=15];
+                    let pcoffset = bits_to_signed(pcoffset9_bits);
+                    let address = self.pc as i32 + pcoffset as i32;
+                    let value = self.memory[address as usize];
 
+                    self.registers[dest_adr as usize] = value;
                 },
-                3 => {},
+                3 => { // STORE or ST
+                    let source_adr = bin_to_u16(&instruction.bits[4..=6]);
+                    let pcoffset9_bits = &instruction.bits[7..=15];
+                    let pcoffset = bits_to_signed(pcoffset9_bits);
+                    let address = self.pc as i32 + pcoffset as i32;
+                    let value = self.registers[source_adr as usize];
+
+                    self.memory[address as usize] = value;
+                },
                 4 => {},
                 5 => {
                     let steer = instruction.bits[10];
@@ -81,6 +93,17 @@ impl Cpu {
                     self.registers[dest_adr as usize] = alu::alu(&sr1, &sr1, false, false, true, true, false, true).out;
                 },
                 10 => {},
+                11 => {},
+                12 => {},
+                13 => {},
+                14 => { // LEA (Load Effective Address
+                    let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
+                    let pcoffset9_bits = &instruction.bits[7..=15];
+                    let pcoffset = bits_to_signed(pcoffset9_bits);
+                    let address = (self.pc as i32 + pcoffset as i32) as u16;
+
+                    self.registers[dest_adr as usize] = Word::from_u16(address);
+                },
                 _ => todo!()
             }
         }
@@ -95,6 +118,16 @@ fn bin_to_u16(input: &[bool]) -> u16 {
     value
 }
 
-fn bin_to_i16(input: &[bool]) -> u16 {
-    
+fn bits_to_signed(bits: &[bool]) -> i16 {
+    let mut value: i16 = 0;
+
+    for &bit in bits {
+        value = (value << 1) | bit as i16;
+    }
+
+    if bits[0] {
+        value - 512
+    } else {
+        value
+    }
 }
