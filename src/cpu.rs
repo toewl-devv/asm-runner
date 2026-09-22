@@ -10,7 +10,8 @@ pub struct Cpu {
     //flags (zero, negative, positive)
     zf: bool,
     nf: bool,
-    pf: bool
+    pf: bool,
+    saved_address: usize,
 }
 
 impl Cpu {
@@ -22,7 +23,8 @@ impl Cpu {
             labels: HashMap::new(),
             zf: false,
             nf: false,
-            pf: false
+            pf: false,
+            saved_address: 0
         }
     }
 
@@ -50,7 +52,7 @@ impl Cpu {
                         self.pc = (self.pc as i16 + pcoffset) as usize;
                     }
                 },
-                1 => {
+                1 => { // ADD
                     let steer = instruction.bits[10];
                     let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
                     let sr1 = self.registers[bin_to_u16(&instruction.bits[7..=9]) as usize];
@@ -91,7 +93,7 @@ impl Cpu {
                     self.memory[address as usize] = value;
                 },
                 4 => {},
-                5 => {
+                5 => { // AND
                     let steer = instruction.bits[10];
                     let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
                     let sr1 = self.registers[bin_to_u16(&instruction.bits[7..=9]) as usize];
@@ -113,7 +115,19 @@ impl Cpu {
                 },
                 6 => {},
                 7 => {},
-                8 => {},
+                8 => { // JSR Jump to Subroutine | SRTT Jump to Subroutine Register
+                    self.registers[7] = Word::from_u16(self.pc as u16);
+                    if instruction.bits[4] {
+                        let pcoffset11_bits = &instruction.bits[5..=15];
+                        let pcoffset11 = bits_to_signed(pcoffset11_bits);
+                        let address = self.pc + pcoffset11 as usize;
+                        self.pc = address;
+                    } else {
+                        let src_adr = bin_to_u16(&instruction.bits[7..=9]);
+                        let adr_to_jump = self.registers[src_adr as usize];
+                        self.pc = bin_to_u16(&adr_to_jump.bits) as usize;
+                    }
+                },
                 9 => { // NOT
                     let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
                     let sr1 = self.registers[bin_to_u16(&instruction.bits[7..=9]) as usize];
@@ -126,9 +140,15 @@ impl Cpu {
                 },
                 10 => {},
                 11 => {},
-                12 => {},
+                12 => { // JUMP or JMP | Return or RET
+                    // RET just runs JMP R7
+                    // does not save the location before jumping
+                    let src_adr = bin_to_u16(&instruction.bits[7..=9]);
+                    let adr_to_jump = self.registers[src_adr as usize];
+                    self.pc = bin_to_u16(&adr_to_jump.bits) as usize;
+                },
                 13 => {},
-                14 => { // LEA (Load Effective Address
+                14 => { // LEA (Load Effective Address)
                     let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
                     let pcoffset9_bits = &instruction.bits[7..=15];
                     let pcoffset = bits_to_signed(pcoffset9_bits);
@@ -158,7 +178,7 @@ fn bits_to_signed(bits: &[bool]) -> i16 {
     }
 
     if bits[0] {
-        value - 512
+        value - 2_i16.pow(bits.len() as u32)
     } else {
         value
     }
