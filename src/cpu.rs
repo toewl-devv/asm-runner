@@ -11,7 +11,6 @@ pub struct Cpu {
     zf: bool,
     nf: bool,
     pf: bool,
-    saved_address: usize,
 }
 
 impl Cpu {
@@ -24,7 +23,6 @@ impl Cpu {
             zf: false,
             nf: false,
             pf: false,
-            saved_address: 0
         }
     }
 
@@ -92,7 +90,19 @@ impl Cpu {
 
                     self.memory[address as usize] = value;
                 },
-                4 => {},
+                4 => { // JSR Jump to Subroutine | SRTT Jump to Subroutine Register
+                    self.registers[7] = Word::from_u16(self.pc as u16);
+                    if instruction.bits[4] {
+                        let pcoffset11_bits = &instruction.bits[5..=15];
+                        let pcoffset11 = bits_to_signed(pcoffset11_bits);
+                        let address = self.pc as i16 + pcoffset11;
+                        self.pc = address as usize;
+                    } else {
+                        let src_adr = bin_to_u16(&instruction.bits[7..=9]);
+                        let adr_to_jump = self.registers[src_adr as usize];
+                        self.pc = bin_to_u16(&adr_to_jump.bits) as usize;
+                    }
+                },
                 5 => { // AND
                     let steer = instruction.bits[10];
                     let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
@@ -111,22 +121,29 @@ impl Cpu {
                     self.nf = self.registers[dest_adr as usize].bits[0];
                     self.zf = self.registers[dest_adr as usize].bits == Word::new().bits;
                     self.pf = !self.nf && !self.zf;
-
                 },
-                6 => {},
-                7 => {},
-                8 => { // JSR Jump to Subroutine | SRTT Jump to Subroutine Register
-                    self.registers[7] = Word::from_u16(self.pc as u16);
-                    if instruction.bits[4] {
-                        let pcoffset11_bits = &instruction.bits[5..=15];
-                        let pcoffset11 = bits_to_signed(pcoffset11_bits);
-                        let address = self.pc + pcoffset11 as usize;
-                        self.pc = address;
-                    } else {
-                        let src_adr = bin_to_u16(&instruction.bits[7..=9]);
-                        let adr_to_jump = self.registers[src_adr as usize];
-                        self.pc = bin_to_u16(&adr_to_jump.bits) as usize;
-                    }
+                6 => { // LDR or Load Register
+                    let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
+                    let sr1: Word = self.registers[bin_to_u16(&instruction.bits[7..=9]) as usize];
+                    let pcoffset6_bits = &instruction.bits[10..=15];
+                    let pcoffset6: i16 = bits_to_signed(pcoffset6_bits);
+                    let mem_adr: i16 = bin_to_u16(&sr1.bits) as i16 + pcoffset6;
+                    let data: Word = self.memory[mem_adr as usize];
+                    self.registers[dest_adr as usize] = data;
+
+                    self.nf = self.registers[dest_adr as usize].bits[0];
+                    self.zf = self.registers[dest_adr as usize].bits == Word::new().bits;
+                    self.pf = !self.nf && !self.zf;
+                },
+                7 => { // STR (Store Register)
+                    let source_adr = bin_to_u16(&instruction.bits[4..=6]);
+                    let base_adr = bin_to_u16(&instruction.bits[7..=9]);
+                    let offset6 = bits_to_signed(&instruction.bits[10..=15]);
+                    let address = bin_to_u16(&self.registers[base_adr as usize].bits) as i16 + offset6;
+
+                    self.memory[address as usize] = self.registers[source_adr as usize];
+                },
+                8 => { // RTI (not needed tbh)
                 },
                 9 => { // NOT
                     let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
@@ -138,8 +155,30 @@ impl Cpu {
                     self.pf = !self.nf && !self.zf;
 
                 },
-                10 => {},
-                11 => {},
+                10 => { // LDI
+                    let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
+                    let pcoffset9_bits = &instruction.bits[7..=15];
+                    let pcoffset9 = bits_to_signed(pcoffset9_bits);
+                    let address = self.pc as i32 + pcoffset9 as i32;
+                    let address = self.memory[address as usize];
+                    let value = self.memory[bin_to_u16(&address.bits) as usize];
+
+                    self.registers[dest_adr as usize] = value;
+
+                    self.nf = self.registers[dest_adr as usize].bits[0];
+                    self.zf = self.registers[dest_adr as usize].bits == Word::new().bits;
+                    self.pf = !self.nf && !self.zf;
+                },
+                11 => { // STI
+                    let source_adr = bin_to_u16(&instruction.bits[4..=6]);
+                    let pcoffset9_bits = &instruction.bits[7..=15];
+                    let pcoffset9 = bits_to_signed(pcoffset9_bits);
+                    let address = self.pc as i32 + pcoffset9 as i32;
+                    let address = self.memory[address as usize];
+
+                    self.memory[bin_to_u16(&address.bits) as usize] =
+                        self.registers[source_adr as usize];
+                }
                 12 => { // JUMP or JMP | Return or RET
                     // RET just runs JMP R7
                     // does not save the location before jumping
@@ -147,7 +186,8 @@ impl Cpu {
                     let adr_to_jump = self.registers[src_adr as usize];
                     self.pc = bin_to_u16(&adr_to_jump.bits) as usize;
                 },
-                13 => {},
+                13 => { // Nothing
+                },
                 14 => { // LEA (Load Effective Address)
                     let dest_adr = bin_to_u16(&instruction.bits[4..=6]);
                     let pcoffset9_bits = &instruction.bits[7..=15];
@@ -156,7 +196,9 @@ impl Cpu {
 
                     self.registers[dest_adr as usize] = Word::from_u16(address);
                 },
-                _ => todo!()
+                15 => { // TRAP
+                },
+                _ => {}
             }
         }
     }
