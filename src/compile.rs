@@ -42,12 +42,14 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
                     out.bits[15] = reg_bin[2];
 
                 } else if args[3].starts_with('#') {
+                    println!("found #");
                     // add 1 and number to add (it's signed i think)
                     out.bits[10] = true;
                     let number: u16 = args[3][1..].parse().ok()?;
                     if number > 31 {
                         return None
                     }
+                    println!("{}", number);
                     //only does unsigned numbers rn, no subtraction lol
                     let num_in_bits: Word = Word::from_u16(number);
                     out.bits[11] = num_in_bits.bits[3];
@@ -56,6 +58,7 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
                     out.bits[14] = num_in_bits.bits[6];
                     out.bits[15] = num_in_bits.bits[7];
                 }
+                println!("{:?}", out.bits);
             },
             "AND" => {},
             "JMP" => {},

@@ -1,5 +1,3 @@
-use std::os::unix::process;
-
 mod word;
 mod cpu;
 mod alu;
@@ -10,6 +8,7 @@ fn main() {
     let line = "ADD R0, R0, #5".to_string();
 
     let add_instr = compile::asm_to_instruction(line).unwrap();
+    println!("{}", word::Word::from_instruction(&add_instr).to_string());
     
     let mut maincpu = cpu::Cpu::new();
 
