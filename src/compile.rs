@@ -9,7 +9,6 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
     if args.len() > 0 {
         match args[0] {
             "ADD" => {
-                println!("ADD RAN");
                 // make opcode:
                 out.bits[0] = false;
                 out.bits[1] = false;
@@ -26,7 +25,7 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
                     if number > 7 {
                         return None
                     }
-                    let reg_bin = regnum_to_bin(number);
+                    let reg_bin = regnum_to_bin(number.into());
                     out.bits[3 * (i-1) + 4] = reg_bin[0];
                     out.bits[3 * (i-1) + 5] = reg_bin[1];
                     out.bits[3 * (i-1) + 6] = reg_bin[2];
@@ -41,20 +40,18 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
                     if number > 7 {
                         return None
                     }
-                    let reg_bin = regnum_to_bin(number);
+                    let reg_bin = regnum_to_bin(number.into());
                     out.bits[13] = reg_bin[0];
                     out.bits[14] = reg_bin[1];
                     out.bits[15] = reg_bin[2];
 
                 } else if args[3].starts_with('#') {
-                    println!("found #");
                     // add 1 and number to add (it's signed i think)
                     out.bits[10] = true;
                     let number: u16 = args[3][1..].parse().ok()?;
                     if number > 31 {
                         return None
                     }
-                    println!("{}", number);
                     //only does unsigned numbers rn, no subtraction lol
                     let num_in_bits: Word = Word::from_u16(number);
                     out.bits[11] = num_in_bits.bits[11];
@@ -63,7 +60,6 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
                     out.bits[14] = num_in_bits.bits[14];
                     out.bits[15] = num_in_bits.bits[15];
                 }
-                println!("{:?}", out.bits);
             },
             "AND" => {},
             "JMP" => {},
@@ -90,13 +86,12 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
     Some(out)
 }
 
-fn regnum_to_bin(mut input: u8) -> [bool;3] {
-    let mut out = [false;3];
-    for i in 0..=2 {
-        if input >= 2_u8.pow(i) {
-            out[i as usize] = true;
-            input -= 2_u8.pow(i);
-        }
+fn regnum_to_bin(regnum: usize) -> [bool; 3] {
+    let mut out = [false; 3];
+
+    for i in 0..3 {
+        out[2 - i] = regnum & (1 << i) != 0;
     }
+
     out
 }

@@ -27,6 +27,7 @@ impl Cpu {
     }
 
     pub fn run(&mut self) {
+        println!("Running...");
         loop {
             if self.pc as usize >= self.memory.len() {
                 println!("PC out of bounds, halting");
