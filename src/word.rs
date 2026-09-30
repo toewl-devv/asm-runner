@@ -1,3 +1,5 @@
+use crate::instruction::Instruction;
+
 #[derive(Clone, Copy)]
 pub struct Word {
     pub bits: [bool; 16]
@@ -23,7 +25,7 @@ impl Word {
         out
     }
 
-    fn to_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         let mut out: String = String::new();
         for x in self.bits {
             out.push(if x {'1'} else {'0'});
@@ -41,5 +43,11 @@ impl Word {
             }
         }
         out
+    }
+
+    pub fn from_instruction(instruction: &Instruction) -> Self {
+        Self {
+            bits: instruction.bits
+        }
     }
 }

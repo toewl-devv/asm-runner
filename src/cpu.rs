@@ -3,9 +3,9 @@ use crate::{instruction::Instruction, word::Word, alu};
 use std::collections::HashMap;
 
 pub struct Cpu {
-    registers: [Word; 8],
+    pub registers: [Word; 8],
     pc: usize,
-    memory: Vec<Word>,
+    pub memory: Vec<Word>,
     labels: HashMap<String, usize>,
     //flags (zero, negative, positive)
     zf: bool,
@@ -14,11 +14,11 @@ pub struct Cpu {
 }
 
 impl Cpu {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Cpu {
             registers: [Word::new(); 8],
             pc: 0,
-            memory: vec![Word::new(); 2048],
+            memory: vec![Word::new(); 3], //should be like 16k or smth
             labels: HashMap::new(),
             zf: false,
             nf: false,
@@ -26,7 +26,7 @@ impl Cpu {
         }
     }
 
-    fn run(&mut self) {
+    pub fn run(&mut self) {
         loop {
             if self.pc as usize >= self.memory.len() {
                 println!("PC out of bounds, halting");
