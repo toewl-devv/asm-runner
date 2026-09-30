@@ -35,11 +35,11 @@ impl Word {
 
     pub fn from_array<const N: usize>(input: [bool;N]) -> Self {
         let mut out = Word::new();
-        for i in 0..=15 {
-            if 16-i <= input.len() { 
+        for i in 0..= input.len() {
+            if input.len()-i <= input.len() { 
                 out.bits[i] = false; 
             } else {
-                out.bits[i] = input[16-i];
+                out.bits[i] = input[input.len()-i];
             }
         }
         out

@@ -10,6 +10,11 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
         match args[0] {
             "ADD" => {
                 println!("ADD RAN");
+                // make opcode:
+                out.bits[0] = false;
+                out.bits[1] = false;
+                out.bits[2] = false;
+                out.bits[3] = true;
                 if args.len() != 4 {
                     return None
                 }
@@ -52,11 +57,11 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
                     println!("{}", number);
                     //only does unsigned numbers rn, no subtraction lol
                     let num_in_bits: Word = Word::from_u16(number);
-                    out.bits[11] = num_in_bits.bits[3];
-                    out.bits[12] = num_in_bits.bits[4];
-                    out.bits[13] = num_in_bits.bits[5];
-                    out.bits[14] = num_in_bits.bits[6];
-                    out.bits[15] = num_in_bits.bits[7];
+                    out.bits[11] = num_in_bits.bits[11];
+                    out.bits[12] = num_in_bits.bits[12];
+                    out.bits[13] = num_in_bits.bits[13];
+                    out.bits[14] = num_in_bits.bits[14];
+                    out.bits[15] = num_in_bits.bits[15];
                 }
                 println!("{:?}", out.bits);
             },

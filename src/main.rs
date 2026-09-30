@@ -16,5 +16,5 @@ fn main() {
 
     maincpu.run();
 
-    println!("{}", maincpu.registers[0].to_string())
+    println!("{}", maincpu.registers[0].to_string());
 }

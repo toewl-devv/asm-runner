@@ -61,7 +61,6 @@ impl Cpu {
                         self.registers[dest_adr as usize] = alu::alu(&sr1, &to_add,false, false, false, false, true, false).out;
                     } else {
                         let sr2 = self.registers[bin_to_u16(&instruction.bits[13..=15]) as usize];
-
                         self.registers[dest_adr as usize] = alu::alu(&sr1, &sr2, false, false, false, false, true, false).out;
                     }
                     self.nf = self.registers[dest_adr as usize].bits[0];
