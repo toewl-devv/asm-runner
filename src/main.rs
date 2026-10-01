@@ -5,18 +5,29 @@ mod instruction;
 mod compile;
 
 fn main() {
-    let line = "ADD R0, R0, #5".to_string();
+    let mut maincpu = cpu::Cpu::new();
+    
+    /*
+    let line1 = "ADD R0, R0, #17".to_string();
+    let line2 = "ADD R1, R1, #5".to_string();
+    let line3 = "ADD R0, R0, R1".to_string();
 
-    let add_instr = compile::asm_to_instruction(line.clone()).unwrap();
-    // println!("{}", word::Word::from_instruction(&add_instr).to_string());
+    let ins1 = compile::asm_to_instruction(line1.clone()).unwrap();
+    let ins2 = compile::asm_to_instruction(line2.clone()).unwrap();
+    let ins3 = compile::asm_to_instruction(line3.clone()).unwrap();
     
     let mut maincpu = cpu::Cpu::new();
 
-    maincpu.memory[0] = word::Word::from_instruction(&add_instr);
+    maincpu.memory[0] = word::Word::from_instruction(&ins1);
+    maincpu.memory[1] = word::Word::from_instruction(&ins2);
+    maincpu.memory[2] = word::Word::from_instruction(&ins3);
 
     maincpu.run();
 
-    println!("{}", line);
+    println!("{}", line1);
+    println!("{}", line2);
+    println!("{}", line3);
 
     println!("R0: {}", maincpu.registers[0].to_string());
+    */
 }

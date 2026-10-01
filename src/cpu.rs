@@ -1,6 +1,6 @@
 // use this: https://medium.com/@saehwanpark/diving-deeper-into-lc-3-from-opcodes-to-machine-code-4637cf00c878
-use crate::{instruction::Instruction, word::Word, alu};
-use std::collections::HashMap;
+use crate::{instruction::Instruction, word::Word, alu, compile};
+use std::{collections::HashMap, hash::Hash};
 
 pub struct Cpu {
     pub registers: [Word; 8],
@@ -24,6 +24,16 @@ impl Cpu {
             nf: false,
             pf: false,
         }
+    }
+        
+    pub fn make_labels_hashmap(&mut self, lines: Vec<String>) {
+        let mut out_map: HashMap<String, usize> = HashMap::new();
+        for i in 0..lines.len() {
+            let label = compile::generate_hashmap(&lines[i]).unwrap();
+            //TODO what if error?
+            out_map.insert(label, i);
+        }
+        self.labels = out_map;
     }
 
     pub fn run(&mut self) {

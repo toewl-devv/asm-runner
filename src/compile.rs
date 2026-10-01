@@ -2,6 +2,27 @@ use crate::instruction::Instruction;
 use crate::word::Word;
 
 // this is for the second pass through the code :)
+pub struct CompiledHashmap {
+    hashmap: String
+}
+
+pub fn generate_hashmap(line: &str) -> Option<String> {
+    let commands = ["ADD", "AND", "NOT", "JMP", "JSR", "JSRR", "LD", "LDI",
+                    "LDR", "LEA", "RET", "RTI", "ST", "STR", "STI", "TRAP"];
+    let line = line.replace(',', "");
+    let args: Vec<&str> = line.split_whitespace().collect();
+    if args[0].to_uppercase() != args[0] {
+        return None;
+    }
+    for com in commands {
+        if args[0] != com {
+            return None;
+        }
+    }
+    Some(args[0].to_string())
+
+}
+
 pub fn asm_to_instruction(line: String) -> Option<Instruction> {
     let mut out = Instruction{bits: [false;16]};
     let line = line.replace(',', "");
@@ -19,6 +40,7 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
                 }
                 for i in 1..=2 {
                     if !args[i].starts_with('R') {
+                        // its a label
                         return None
                     }
                     let number: u8 = args[i][1..].parse().ok()?;
@@ -59,6 +81,8 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
                     out.bits[13] = num_in_bits.bits[13];
                     out.bits[14] = num_in_bits.bits[14];
                     out.bits[15] = num_in_bits.bits[15];
+                } else {
+                    // its a label if nothing else
                 }
             },
             "AND" => {},
@@ -77,7 +101,19 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
             "STR" => {},
             "TRAP" => {},
             _ => {
-                // check if BR, if not then it's a LABEL
+                if args[0].starts_with("BR") {
+                    let nzp = &args[0][2..];
+                    for i in nzp.chars() {
+                        match i {
+                            'n' => {out.bits[4] = true},
+                            'z' => {out.bits[5] = true},
+                            'p' => {out.bits[5] = true},
+                            _ => {}
+                        }
+                    }
+                    //TODO get args[1], it's PCOFFSET9, but it might be a label!
+                }
+                //last option is a LABEL
             }
         }
     } else {
