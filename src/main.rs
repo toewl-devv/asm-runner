@@ -4,9 +4,28 @@ mod alu;
 mod instruction;
 mod compile;
 
+use std::fs;
+
 fn main() {
     let mut maincpu = cpu::Cpu::new();
     
+    let file_path = "src/program.asm";
+    let lines = if fs::exists(file_path).unwrap() {
+        let contents = fs::read_to_string(file_path)
+            .expect("Should have been able to read the file");
+        contents
+            .split('\n')
+            .map(String::from)
+            .collect()
+    } else {
+        vec![String::new()]
+    };
+    println!("{:?}", lines);
+
+    maincpu.make_labels_hashmap(lines);
+
+    // println!("{:?}", maincpu.labels);
+
     /*
     let line1 = "ADD R0, R0, #17".to_string();
     let line2 = "ADD R1, R1, #5".to_string();

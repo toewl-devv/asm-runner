@@ -1,12 +1,12 @@
 // use this: https://medium.com/@saehwanpark/diving-deeper-into-lc-3-from-opcodes-to-machine-code-4637cf00c878
 use crate::{instruction::Instruction, word::Word, alu, compile};
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::HashMap};
 
 pub struct Cpu {
     pub registers: [Word; 8],
     pc: usize,
     pub memory: Vec<Word>,
-    labels: HashMap<String, usize>,
+    pub labels: HashMap<String, i64>,
     //flags (zero, negative, positive)
     zf: bool,
     nf: bool,
@@ -27,12 +27,18 @@ impl Cpu {
     }
         
     pub fn make_labels_hashmap(&mut self, lines: Vec<String>) {
-        let mut out_map: HashMap<String, usize> = HashMap::new();
+        let mut out_map: HashMap<String, i64> = HashMap::new();
         for i in 0..lines.len() {
-            let label = compile::generate_hashmap(&lines[i]).unwrap();
-            //TODO what if error?
-            out_map.insert(label, i);
+            println!("{}", lines[i]);
+            if lines[i].len() != 0 {
+                println!("hi");
+                let label = compile::generate_hashmap(&lines[i]).unwrap();
+                //TODO what if error?
+                println!("{}", label);
+                out_map.insert(label, i as i64);
+            }
         }
+        println!("{:?}", &out_map);
         self.labels = out_map;
     }
 

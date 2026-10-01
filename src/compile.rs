@@ -11,6 +11,9 @@ pub fn generate_hashmap(line: &str) -> Option<String> {
                     "LDR", "LEA", "RET", "RTI", "ST", "STR", "STI", "TRAP"];
     let line = line.replace(',', "");
     let args: Vec<&str> = line.split_whitespace().collect();
+    if args.len() == 0 {
+        return None
+    }
     if args[0].to_uppercase() != args[0] {
         return None;
     }
@@ -20,7 +23,6 @@ pub fn generate_hashmap(line: &str) -> Option<String> {
         }
     }
     Some(args[0].to_string())
-
 }
 
 pub fn asm_to_instruction(line: String) -> Option<Instruction> {
@@ -74,7 +76,7 @@ pub fn asm_to_instruction(line: String) -> Option<Instruction> {
                     if number > 31 {
                         return None
                     }
-                    //only does unsigned numbers rn, no subtraction lol
+                    //TODO only does unsigned numbers rn, no subtraction lol
                     let num_in_bits: Word = Word::from_u16(number);
                     out.bits[11] = num_in_bits.bits[11];
                     out.bits[12] = num_in_bits.bits[12];
